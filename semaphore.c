@@ -1,0 +1,177 @@
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <unistd.h>
+#include <stdlib.h>
+ 
+union semun
+{
+    int val;
+    struct semid_ds *buf;
+    ushort *array;
+};
+void die(char *msg)
+{
+  perror(msg);
+  exit(1);
+}
+ 
+int main()
+{
+    int i,j;
+    int pid;
+    int semid; /* semid of semaphore set */
+    key_t key ; /* key to pass to semget() */
+    int semflg = IPC_CREAT | 0666; /* semflg to pass to semget() */
+    int nsems = 1; /* nsems to pass to semget() */
+    int nsops; /* number of operations to do */
+//    struct sembuf *sops = (struct sembuf *) malloc(2*sizeof(struct sembuf));
+    struct sembuf *sops = (struct sembuf *) malloc(2*sizeof(struct sembuf));
+    /* ptr to operations to perform */
+ 
+    /* generate key */
+    if ((key = ftok("semaphore.c", 'Q')) == -1) 
+       die("ftok");
+     
+    /* set up semaphore */
+ 
+    if ((semid = semget(key, nsems, semflg)) == -1)
+        die("semget: semget failed");
+ 
+ 
+    if ((pid = fork()) < 0)
+        die("fork");
+ 
+    if (pid == 0)
+    {
+        /* child */
+        i = 0;
+ 
+ 
+        while (i  < 1)  /* allow for 3 semaphore sets */
+        {
+ 
+            nsops = 2;
+ 
+            /* wait for semaphore to reach zero */
+#if 0 
+            sops[0].sem_num = 0; /* We only use one track */
+            sops[0].sem_op = 1; /* wait for semaphore flag to become zero */
+            sops[0].sem_flg = SEM_UNDO | IPC_NOWAIT; /* take off semaphore asynchronous  */
+#endif 
+            sops[0].sem_num = 0; /* We only use one track */
+            sops[0].sem_op = 0; /* wait for semaphore flag to become zero */
+            sops[0].sem_flg = SEM_UNDO; /* take off semaphore asynchronous  */
+ 
+ 
+            sops[1].sem_num = 0;
+            sops[1].sem_op = 1; /* increment semaphore -- take control of track */
+            sops[1].sem_flg = SEM_UNDO | IPC_NOWAIT; /* take off semaphore */
+            /* Recap the call to be made. */
+ 
+            printf("\nsemop:Child  Will Calling semop(%d, &sops, %d) with:", semid, nsops);
+            for (j = 0; j < nsops; j++)
+            {
+                 printf("\n\tsops[%d].sem_num = %d, ", j, sops[j].sem_num);
+                 printf("sem_op = %d, ", sops[j].sem_op);
+                 printf("sem_flg = %#o\n", sops[j].sem_flg);
+            }
+ 
+            /* Make the semop() call and report the results. */
+            if ((j = semop(semid, sops, nsops)) == -1)
+            {
+                perror("semop: semop failed");
+            }
+            else
+            {
+                printf("\n\nChild Process already Taking Control of Track: %d/3 times\n", i+1);
+                sleep(5); /* DO Nothing for 5 seconds */
+ 
+                nsops = 1;
+ 
+                /* wait for semaphore to reach zero */
+                sops[0].sem_num = 0;
+                sops[0].sem_op = -1; /* Give UP COntrol of track */
+                sops[0].sem_flg = SEM_UNDO | IPC_NOWAIT; /* take off semaphore, asynchronous  */
+ 
+ 
+                printf("Child Process will Giving up Control of Track: %d/3 times\n", i+1);
+                if ((j = semop(semid, sops, nsops)) == -1)
+                {
+                    perror("semop: semop failed");
+                }
+                else
+                     printf("Child Process already Giving up Control of Track: %d/3 times\n", i+1);
+                sleep(5); /* halt process to allow parent to catch semaphore change first */
+            }
+            ++i;
+        }
+ 
+    }
+    else /* parent */
+    {
+        i = 0;
+ 
+        while (i  < 1)   /* allow for 3 semaphore sets */
+        {
+ 
+            nsops = 2;
+ 
+            /* wait for semaphore to reach zero */
+#if 0
+            sops[0].sem_num = 0;
+            sops[0].sem_op = 1; /* wait for semaphore flag to become zero */
+            sops[0].sem_flg = SEM_UNDO|IPC_NOWAIT; /* take off semaphore asynchronous  */
+ #endif
+            sops[0].sem_num = 0;
+            sops[0].sem_op = 0; /* wait for semaphore flag to become zero */
+            sops[0].sem_flg = SEM_UNDO; /* take off semaphore asynchronous  */
+ 
+ 
+            sops[1].sem_num = 0;
+            sops[1].sem_op = 1; /* increment semaphore -- take control of track */
+            sops[1].sem_flg = SEM_UNDO | IPC_NOWAIT; /* take off semaphore */
+            /* Recap the call to be made. */
+ 
+             printf("\nsemop:Parent will Calling semop(%d, &sops, %d) with:", semid, nsops);
+            for (j = 0; j < nsops; j++)
+            {
+                printf("\n\tsops[%d].sem_num = %d, ", j, sops[j].sem_num);
+                printf("sem_op = %d, ", sops[j].sem_op);
+                printf("sem_flg = %#o\n", sops[j].sem_flg);
+            }
+ 
+            /* Make the semop() call and report the results. */
+            if ((j = semop(semid, sops, nsops)) == -1)
+            {
+                perror("semop: semop failed");
+            }
+            else
+            {
+                printf("Parent Process already Taking Control of Track: %d/3 times\n", i+1);
+                sleep(5); /* Sleep for 5 seconds */
+ 
+                nsops = 1;
+ 
+                /* wait for semaphore to reach zero */
+                sops[0].sem_num = 0;
+                sops[0].sem_op = -1; /* Give UP Control of track */
+                sops[0].sem_flg = SEM_UNDO | IPC_NOWAIT; /* take off semaphore, asynchronous  */
+ 
+                printf("Parent Process will Giving up Control of Track: %d/3 times\n", i+1);
+                if ((j = semop(semid, sops, nsops)) == -1)
+                {
+                    perror("semop: semop failed");
+                }
+                else
+                    printf("Parent Process already Giving up Control of Track: %d/3 times\n", i+1);
+                sleep(5); /* halt process to allow child to catch semaphore change first */
+            }
+            ++i;
+ 
+        }
+ 
+    }
+    return 0;
+}
