@@ -21,12 +21,11 @@ int main()
 {
     int i,j;
     int pid;
-    int semid; /* semid of semaphore set */
-    key_t key ; /* key to pass to semget() */
+    int semid;     /* semid of semaphore set */
+    key_t key ;    /* key to pass to semget() */
     int semflg = IPC_CREAT | 0666; /* semflg to pass to semget() */
     int nsems = 1; /* nsems to pass to semget() */
-    int nsops; /* number of operations to do */
-//    struct sembuf *sops = (struct sembuf *) malloc(2*sizeof(struct sembuf));
+    int nsops;     /* number of operations to do */
     struct sembuf *sops = (struct sembuf *) malloc(2*sizeof(struct sembuf));
     /* ptr to operations to perform */
  
@@ -48,10 +47,8 @@ int main()
         /* child */
         i = 0;
  
- 
         while (i  < 1)  /* allow for 3 semaphore sets */
         {
- 
             nsops = 2;
  
             /* wait for semaphore to reach zero */
@@ -60,13 +57,13 @@ int main()
             sops[0].sem_op = 1; /* wait for semaphore flag to become zero */
             sops[0].sem_flg = SEM_UNDO | IPC_NOWAIT; /* take off semaphore asynchronous  */
 #endif 
-            sops[0].sem_num = 0; /* We only use one track */
-            sops[0].sem_op = 0; /* wait for semaphore flag to become zero */
+            sops[0].sem_num = 0;        /* We only use one track */
+            sops[0].sem_op = 0;         /* wait for semaphore flag to become zero */
             sops[0].sem_flg = SEM_UNDO; /* take off semaphore asynchronous  */
  
  
             sops[1].sem_num = 0;
-            sops[1].sem_op = 1; /* increment semaphore -- take control of track */
+            sops[1].sem_op = 1;                      /* increment semaphore -- take control of track */
             sops[1].sem_flg = SEM_UNDO | IPC_NOWAIT; /* take off semaphore */
             /* Recap the call to be made. */
  
@@ -125,12 +122,12 @@ int main()
             sops[0].sem_flg = SEM_UNDO|IPC_NOWAIT; /* take off semaphore asynchronous  */
  #endif
             sops[0].sem_num = 0;
-            sops[0].sem_op = 0; /* wait for semaphore flag to become zero */
+            sops[0].sem_op = 0;         /* wait for semaphore flag to become zero */
             sops[0].sem_flg = SEM_UNDO; /* take off semaphore asynchronous  */
  
  
             sops[1].sem_num = 0;
-            sops[1].sem_op = 1; /* increment semaphore -- take control of track */
+            sops[1].sem_op = 1;                      /* increment semaphore -- take control of track */
             sops[1].sem_flg = SEM_UNDO | IPC_NOWAIT; /* take off semaphore */
             /* Recap the call to be made. */
  
@@ -156,7 +153,7 @@ int main()
  
                 /* wait for semaphore to reach zero */
                 sops[0].sem_num = 0;
-                sops[0].sem_op = -1; /* Give UP Control of track */
+                sops[0].sem_op = -1;                     /* Give UP Control of track */
                 sops[0].sem_flg = SEM_UNDO | IPC_NOWAIT; /* take off semaphore, asynchronous  */
  
                 printf("Parent Process will Giving up Control of Track: %d/3 times\n", i+1);
