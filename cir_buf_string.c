@@ -14,15 +14,17 @@ void buf_put (char *str)
     /* 2nd cal string length */
     int len = strlen(str);
 
+    int idx = 0;
     /* circular buf */
     if (len <= left)
     {
-        strcpy(pIn, str);
-        pIn += len;
+        idx = 0;
+        for (; idx < len; idx++)
+            *pIn++ = *(str+idx) ;
     }
     else
     {
-        int idx = 0;
+        idx = 0;
         for (; idx < left; idx++)
             *(pIn+idx) = *(str+idx);
 
@@ -35,9 +37,9 @@ void buf_put (char *str)
 
 int main()
 {
-//    char string[] = "abcdefghijklmn";
+    char string[] = "abcdefghijklmn";
 //    char string[] = "abcdefghij";
-    char string[] = "abcdefgh";
+//    char string[] = "abcdefgh";
 
     buf_put(string);
     printf("%s\n", buf);
