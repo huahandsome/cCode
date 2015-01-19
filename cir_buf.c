@@ -5,7 +5,6 @@
 char buf[BUF_SIZE +1] = {0};
 
 char *pIn  = buf;
-char *pOut = buf;
 char *pEnd = &buf[BUF_SIZE];
 
 void buf_put (char ch)
