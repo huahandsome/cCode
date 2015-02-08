@@ -16,6 +16,7 @@ void add_node(node_t **head, char *string)
 
     if (!pHead)
     {
+        /* first create a header */
         tmp = (node_t*)malloc(sizeof(node_t));
         if (!tmp) 
         {
@@ -25,7 +26,8 @@ void add_node(node_t **head, char *string)
         tmp->next = NULL;
         strcpy(tmp->string, "This is head");
         *head = tmp;
-
+       
+        /* this is the first node */
         tmp = (node_t *)malloc(sizeof(node_t));
         if (!tmp)
         {
